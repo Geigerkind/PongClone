@@ -1,9 +1,9 @@
 # Pong #
 A Pong-Clone using SDL2. 
 
-This was created as an learning experience for game development.
+This was created as an learning experience for game development and as a project for my university.
 
-It is a multiplayer only game, meant to be played with 2 or more person on the same computer.
+It is a multiplayer only game, meant to be played with 2 or more persons on the same computer.
 
 Added features:  
 1. 2 modes: Time-Pong and Classic-Pong  
