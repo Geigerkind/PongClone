@@ -96,10 +96,10 @@ void draw_Game();
 void init_Game();
 void write_text(SDL_Renderer *renderer, char text, int posx, int posy, int size);
 void set_Game_Vars();
-void respawn_Ball(int player);
+void respawn_Ball(struct Player *p);
 void spawn_Perc(struct Perc *p);
 void despawn_Perc(struct Perc *p);
-char* format_Time(int time);
+char* format_Time(int t);
 /* PROTOTYPES END */
 
 void spawn_Perc(struct Perc *p){
@@ -121,7 +121,6 @@ void spawn_Perc(struct Perc *p){
     SDL_SetRenderDrawColor(gv.renderer, p->r, p->g, p->b, 255);
     SDL_RenderDrawRect(gv.renderer, &r);
     SDL_RenderFillRect(gv.renderer, &r);
-    SDL_SetRenderDrawColor(gv.renderer, 0, 0, 0, 255);
   }
 }
 
@@ -227,13 +226,14 @@ void draw_Rules(){
   write_Text(gv.renderer, "Press ESC to go back.", 20, 440, 20);
 }
 
+// Not pretty but it works :)
+char cha[10];
 char* format_Time(int t){
-  char *c;
   int minutes = t/60;
   int seconds = t%60;
-  if (seconds<10) sprintf(c, "%d:0%d", minutes, seconds);
-  else sprintf(c, "%d:%d", minutes, seconds);
-  return c;
+  if (seconds<10) sprintf(cha, "%d:0%d", minutes, seconds);
+  else sprintf(cha, "%d:%d", minutes, seconds);
+  return cha;
 }
 
 void draw_GameOver(){
@@ -367,39 +367,26 @@ void draw_Field(){
     if (gv.p4.lifes>0) count++;
     if (count==1){ gv.timeend = time(0); gv.state = 5;}
     write_Text(gv.renderer, "Mode: Classic-Pong", 20, 5, 20);
-    sprintf(buffer, "Blue: %d", gv.p1.lifes);
-    write_Text(gv.renderer, buffer, 20, 25, 20);
-    sprintf(buffer, "Red: %d", gv.p2.lifes);
-    write_Text(gv.renderer, buffer, 120, 25, 20);
-    if (gv.player>2){ 
-      sprintf(buffer, "Green: %d", gv.p3.lifes);
-      write_Text(gv.renderer, buffer, 220, 25, 20);
-    }
-    if (gv.player>3){
-      sprintf(buffer, "Purple: %d", gv.p4.lifes);
-      write_Text(gv.renderer, buffer, 320, 25, 20);
-    }
-    write_Text(gv.renderer, "Press ESC to go back", 420, 5, 20);
   }else{
     // checking for game over
     int t = time(0);
     if ((gv.timestart+300)-t<=0){ gv.timeend = t; gv.state = 5;}
-    sprintf(buffer, "Mode: Time-Ping - %s", format_Time(gv.timestart+300-t));
+    sprintf(buffer, "Mode: Time-Pong - %s", format_Time(gv.timestart+300-t));
     write_Text(gv.renderer, buffer, 20, 5, 20);
-    sprintf(buffer, "Blue: %d", gv.p1.lifes);
-    write_Text(gv.renderer, buffer, 20, 25, 20);
-    sprintf(buffer, "Red: %d", gv.p2.lifes);
-    write_Text(gv.renderer, buffer, 120, 25, 20);
-    if (gv.player>2){ 
-      sprintf(buffer, "Green: %d", gv.p3.lifes);
-      write_Text(gv.renderer, buffer, 220, 25, 20);
-    }
-    if (gv.player>3){
-      sprintf(buffer, "Purple: %d", gv.p4.lifes);
-      write_Text(gv.renderer, buffer, 320, 25, 20);
-    }
-    write_Text(gv.renderer, "Press ESC to go back", 420, 5, 20);
   }
+  sprintf(buffer, "Blue: %d", gv.p1.lifes);
+  write_Text(gv.renderer, buffer, 20, 25, 20);
+  sprintf(buffer, "Red: %d", gv.p2.lifes);
+  write_Text(gv.renderer, buffer, 120, 25, 20);
+  if (gv.player>2){ 
+    sprintf(buffer, "Green: %d", gv.p3.lifes);
+    write_Text(gv.renderer, buffer, 220, 25, 20);
+  }
+  if (gv.player>3){
+    sprintf(buffer, "Purple: %d", gv.p4.lifes);
+    write_Text(gv.renderer, buffer, 320, 25, 20);
+  }
+  write_Text(gv.renderer, "Press ESC to go back", 420, 5, 20);
 
   // Drawing percs
   spawn_Perc(&gv.e1);
@@ -455,19 +442,19 @@ void move_Ball(){
   change_Ball_Direction(checkCollosion(&gv.b.o, &gv.neck.l5, 1));
   change_Ball_Direction(checkCollosion(&gv.b.o, &gv.neck.l7, 1));
   if (checkCollosion(&gv.b.o, &gv.neck.l2, 1)<360){
-    if (gv.p2.lifes>0 || !gv.mode) respawn_Ball(2);
+    if ((gv.p2.lifes>0 || !gv.mode) && gv.state==1) respawn_Ball(&gv.p2);
     else change_Ball_Direction(0);
   }
   if (checkCollosion(&gv.b.o, &gv.neck.l4, 1)<360){
-    if (gv.p1.lifes>0 || !gv.mode) respawn_Ball(1);
+    if ((gv.p1.lifes>0 || !gv.mode) && gv.state==1) respawn_Ball(&gv.p1);
     else change_Ball_Direction(0);
   }
   if ((colangle = checkCollosion(&gv.b.o, &gv.neck.l6, 1))<360){
-    if (gv.p3.lifes>0 || !gv.mode) respawn_Ball(3);
+    if ((gv.p3.lifes>0 || (!gv.mode && gv.player>2)) && gv.state==1) respawn_Ball(&gv.p3);
     else change_Ball_Direction(colangle);
   }
   if ((colangle = checkCollosion(&gv.b.o, &gv.neck.l8, 1))<360){
-    if (gv.p4.lifes>0 || !gv.mode) respawn_Ball(4);
+    if ((gv.p4.lifes>0 || (!gv.mode && gv.player>3)) && gv.state==1) respawn_Ball(&gv.p4);
     else change_Ball_Direction(colangle);
   }
 
@@ -533,10 +520,10 @@ void move_Ball(){
 
 float checkCollosion(struct Object *o1, struct Object *o2, int flag){
   int left, right, top, bottom;
-  left = o2->posx1-3;
-  right = o2->posx2+3;
-  top = o2->posy1-3;
-  bottom = o2->posy2+3;
+  left = o2->posx1-1;
+  right = o2->posx2+1;
+  top = o2->posy1-1;
+  bottom = o2->posy2+1;
   SDL_Rect r1; r1.x = o1->posx1; r1.y = o1->posy1; r1.w = o1->posx2-o1->posx1; r1.h = o1->posy2-o1->posy1;
   if (flag){
     if (SDL_IntersectRectAndLine(&r1, &left, &top, &right, &bottom))
@@ -554,39 +541,11 @@ float checkCollosion(struct Object *o1, struct Object *o2, int flag){
   return 999;
 }
 
-void respawn_Ball(int player){
-  if (player)
+void respawn_Ball(struct Player *p){
+  if (p != NULL){
     playSound(wav[rand()%5], SDL_MIX_MAXVOLUME / 2);
-  if (gv.mode){
-    switch(player){
-      case 1:
-        gv.p1.lifes -= 1;
-        break;
-      case 2:
-        gv.p2.lifes -= 1;
-        break;
-      case 3:
-        gv.p3.lifes -= 1;
-        break;
-      case 4:
-        gv.p4.lifes -= 1;
-        break;
-    }
-  }else{
-    switch(player){
-      case 1:
-        gv.p1.lifes += 1;
-        break;
-      case 2:
-        gv.p2.lifes += 1;
-        break;
-      case 3:
-        gv.p3.lifes += 1;
-        break;
-      case 4:
-        gv.p4.lifes += 1;
-        break;
-    }
+    if (gv.mode) p->lifes--;
+    else p->lifes++;
   }
   gv.b = (struct Ball){
     .o = (struct Object){.posx1 = 315,.posy1 = 260,.posx2 = 325,.posy2 = 270,},
@@ -660,7 +619,7 @@ void set_Game_Vars(){
       };
       gv.p2 = (struct Player){
         .o = (struct Object){.posx1 = 570,.posy1 = 230,.posx2 = 590,.posy2 = 280,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .size = 50, .lifes = gv.mode*1, .speed = 5
       };
       gv.p3 = (struct Player){
         .o = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0,},
@@ -683,7 +642,7 @@ void set_Game_Vars(){
       break;
   }
 
-  respawn_Ball(0);
+  respawn_Ball(NULL);
   if (!gv.state){
     gv.p1 = (struct Player){
       .o = (struct Object){.posx1 = -100,.posy1 = -100,.posx2 = 0,.posy2 = 0,},
@@ -702,13 +661,12 @@ void set_Game_Vars(){
       .size = 0, .lifes = 0, .speed = 5
     };
   }else{
-    int t = time(0);
-    gv.e1.spawnat = t+20 + (rand()%60);
-    gv.e2.spawnat = t+20 + (rand()%120);
-    gv.e3.spawnat = t+20 + (rand()%180);
-    gv.e4.spawnat = t+20 + (rand()%80);
-    gv.e5.spawnat = t+20 + (rand()%70);
-    gv.e6.spawnat = t+20 + (rand()%100);
+    despawn_Perc(&gv.e1);
+    despawn_Perc(&gv.e2);
+    despawn_Perc(&gv.e3);
+    despawn_Perc(&gv.e4);
+    despawn_Perc(&gv.e5);
+    despawn_Perc(&gv.e6);
   }
 }
 
@@ -757,9 +715,7 @@ void draw_Game(){
       SDL_Delay(1000/FRAMES_PER_SECOND);
       SDL_Event e;
       if (SDL_PollEvent(&e)) {
-          if (e.type == SDL_QUIT) {
-              break;
-          }
+          if (e.type == SDL_QUIT) break;
           if (e.type == SDL_KEYDOWN){
             if (!gv.state){
               if (e.key.keysym.sym == SDLK_g){
@@ -767,18 +723,10 @@ void draw_Game(){
                 gv.timestart = time(0);
                 set_Game_Vars();
               }
-              if (e.key.keysym.sym == SDLK_p){
-                gv.state = 2;
-              }
-              if (e.key.keysym.sym == SDLK_m){
-                gv.state = 3;
-              }
-              if (e.key.keysym.sym == SDLK_r){
-                gv.state = 4;
-              }
-              if (e.key.keysym.sym == SDLK_q){
-                break;
-              }
+              if (e.key.keysym.sym == SDLK_p) gv.state = 2;
+              if (e.key.keysym.sym == SDLK_m) gv.state = 3;
+              if (e.key.keysym.sym == SDLK_r) gv.state = 4;
+              if (e.key.keysym.sym == SDLK_q) break;
             }else if(gv.state==2){
               if (e.key.keysym.sym == SDLK_1){
                 gv.player = 2;
