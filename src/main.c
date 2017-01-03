@@ -3,22 +3,23 @@
 #include <string.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <SDL_image.h>
 #include <time.h>
 #include <math.h>
 #include "audio.h"
 #include "main.h"
 
 #define PI 3.14159265358979323
+#define FRAMES_PER_SECOND 180
+#define TITLE "Pong"
 
 /* GLOBALS */
-const int FRAMES_PER_SECOND = 60;
 int frames = 0;
-const char *title = "Pong";
 const char wav[5][40] = {
-  "../sound/Dominating.wav",
-  "../sound/DoubleKill.wav",
   "../sound/FirstBlood.wav",
+  "../sound/DoubleKill.wav",
   "../sound/TrippleKill.wav",
+  "../sound/Dominating.wav",
   "../sound/Godlike.wav",
 };
 char buffer[40];
@@ -36,7 +37,7 @@ void write_Text(SDL_Renderer *renderer, char *text, int posx, int posy, int size
   int texH = 0;
 
   TTF_Init();
-  TTF_Font * font = TTF_OpenFont("../assets/arial.ttf", size);
+  TTF_Font * font = TTF_OpenFont("../assets/OpenSans.ttf", size);
   SDL_Color color = { 255, 255, 255 };
   SDL_Surface * surface = TTF_RenderText_Solid(font,
   text, color);
@@ -60,6 +61,34 @@ char* format_Time(int t){
   else sprintf(cha, "%d:%d", minutes, seconds);
   return cha;
 }
+
+/*
+* Draws a given texture and positions it.
+*/
+void draw_Texture(char *path, float *x, float *y){
+  int texW,texH;
+  SDL_Texture * texture = IMG_LoadTexture(gv.renderer, path);
+
+  SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+  SDL_Rect dstrect = {*x, *y, texW, texH};
+
+  SDL_RenderCopy(gv.renderer, texture, NULL, &dstrect);
+  SDL_DestroyTexture(texture);
+}
+
+/*
+* Returns the ball asset depending on the speed
+*/
+char* get_Ball_Asset(){
+  if (gv.b.speed>8) 
+    return "../assets/pong4.png";
+  if (gv.b.speed>14)
+    return "../assets/pong2.png";
+  if (gv.b.speed>20)
+    return "../assets/pong.png";
+  return "../assets/pong3.png";
+}
+
 /* Display functions end */
 /*
 * Menu drawing functions:
@@ -70,13 +99,11 @@ void draw_Menu(){
   // Background animation
   updateEntities();
 
-  SDL_Rect r3; r3.x = gv.b.o.posx1; r3.y = gv.b.o.posy1; r3.w = gv.b.o.posx2-gv.b.o.posx1; r3.h = gv.b.o.posy2-gv.b.o.posy1;
-
   SDL_SetRenderDrawColor(gv.renderer, 255, 255, 0, 255);
 
-  SDL_RenderFillRect(gv.renderer, &r3);
+  draw_Texture(get_Ball_Asset(), &gv.b.o.posx1, &gv.b.o.posy1);
 
-  // Drawing the lines 
+  // Drawing borders
   SDL_RenderDrawLine(gv.renderer, gv.neck.l1.posx1, gv.neck.l1.posy1, gv.neck.l1.posx2, gv.neck.l1.posy2);
   SDL_RenderDrawLine(gv.renderer, gv.neck.l2.posx1, gv.neck.l2.posy1, gv.neck.l2.posx2, gv.neck.l2.posy2);
   SDL_RenderDrawLine(gv.renderer, gv.neck.l3.posx1, gv.neck.l3.posy1, gv.neck.l3.posx2, gv.neck.l3.posy2);
@@ -91,8 +118,9 @@ void draw_Menu(){
   // Menu points
   int center = gv.dim.width/2-180;
   int fontsize = 30;
-  int startheight = 130;
+  int startheight = 230;
 
+  write_Text(gv.renderer, "Pong", center+25, startheight-180, 120);
   write_Text(gv.renderer, "Press G to start the game", center, startheight, fontsize);
   write_Text(gv.renderer, "Press P to select the player", center, startheight+fontsize, fontsize);
   write_Text(gv.renderer, "Press M to select the mode", center, startheight+2*fontsize, fontsize);
@@ -105,15 +133,15 @@ void draw_PlayerSelection(){
   write_Text(gv.renderer, "1. Two player", 20, 50, 20);
   write_Text(gv.renderer, "2. Three player", 20, 70, 20);
   write_Text(gv.renderer, "3. Four player", 20, 90, 20);
-  write_Text(gv.renderer, "Player 1 - Blue:   Up: Arrow-Left", 20, 120, 20);
+  write_Text(gv.renderer, "Player 1 - Blue:    Up: Arrow-Left", 20, 120, 20);
   write_Text(gv.renderer, "                          Down: Arrow-Right", 18, 140, 20);
-  write_Text(gv.renderer, "Player 2 - Red:    Up: A", 20, 170, 20);
-  write_Text(gv.renderer, "                          Down: D", 20, 190, 20);
+  write_Text(gv.renderer, "Player 2 - Red:     Up: A", 20, 170, 20);
+  write_Text(gv.renderer, "                        Down: D", 26, 190, 20);
   write_Text(gv.renderer, "Player 3 - Green: Up: U", 20, 220, 20);
-  write_Text(gv.renderer, "                          Down: O", 22, 240, 20);
+  write_Text(gv.renderer, "                         Down: O", 25, 240, 20);
   write_Text(gv.renderer, "Player 4 - Purple: Up: G", 20, 270, 20);
-  write_Text(gv.renderer, "                          Down: J", 22, 290, 20);
-  write_Text(gv.renderer, "Press ESC to go back.", 20, 440, 20);
+  write_Text(gv.renderer, "                          Down: J", 21, 290, 20);
+  write_Text(gv.renderer, "Press ESC to go back.", 20, 534, 20);
 }
 
 void draw_ModeSelection(){
@@ -122,7 +150,7 @@ void draw_ModeSelection(){
   write_Text(gv.renderer, "most points will loose.", 20, 70, 20);
   write_Text(gv.renderer, "2. Classic-Pong: Everyone has 10 lifes. Whoever drops to 0", 20, 100, 20);
   write_Text(gv.renderer, "first, will loose.", 20, 120, 20);
-  write_Text(gv.renderer, "Press ESC to go back.", 20, 440, 20);
+  write_Text(gv.renderer, "Press ESC to go back.", 20, 534, 20);
 }
 
 void draw_Rules(){
@@ -130,13 +158,13 @@ void draw_Rules(){
   write_Text(gv.renderer, "wins the other.", 20, 40, 20);
   write_Text(gv.renderer, "The speed of the ball increases over time.", 20, 75, 20);
   write_Text(gv.renderer, "There are different modifiers that spawn during the game:", 20, 110, 20);
-  write_Text(gv.renderer, "Red: Modify the speed of the ball.", 20, 135, 20);
-  write_Text(gv.renderer, "Green: Modify the speed of the player, who reflected the ball last.", 20, 160, 20);
-  write_Text(gv.renderer, "Blue: Modify the size of the player, who reflected the ball last.", 20, 185, 20);
-  write_Text(gv.renderer, "Yellow: Inverts the controls.", 20, 210, 20);
-  write_Text(gv.renderer, "Turquoise: A barrier on the field.", 20, 235, 20);
-  write_Text(gv.renderer, "White: Randomized change of the direction of the ball.", 20, 260, 20);
-  write_Text(gv.renderer, "Press ESC to go back.", 20, 440, 20);
+  write_Text(gv.renderer, "Red: Modify the speed of the ball.", 20, 145, 20);
+  write_Text(gv.renderer, "Green: Modify the speed of the player, who reflected the ball last.", 20, 170, 20);
+  write_Text(gv.renderer, "Blue: Modify the size of the player, who reflected the ball last.", 20, 195, 20);
+  write_Text(gv.renderer, "Yellow: Inverts the controls.", 20, 220, 20);
+  write_Text(gv.renderer, "Turquoise: A barrier on the field.", 20, 245, 20);
+  write_Text(gv.renderer, "Purple: Randomized change of the direction of the ball.", 20, 270, 20);
+  write_Text(gv.renderer, "Press ESC to go back.", 20, 534, 20);
 }
 /* Menu functions end */
 
@@ -144,6 +172,7 @@ void draw_Rules(){
 * Game drawing functions
 *
 */
+
 /*
 * Attempts to spawn a perc if the time allows.
 * Attempts to create a random position.
@@ -154,8 +183,8 @@ void spawn_Perc(struct Perc *p){
   if (p->spawnat<=t){
     if (p->o.posx1<=0 || (p->spawnat+20)<=t){
       int x,y;
-      x = 80 + (rand()%500);
-      y = 100 + (rand()%320);
+      x = 80 + (rand()%904);
+      y = 100 + (rand()%384);
       p->o.posx1 = x;
       p->o.posx2 = x+20;
       p->o.posy1 = y;
@@ -164,10 +193,8 @@ void spawn_Perc(struct Perc *p){
     if ((p->spawnat+20)<=t){
       p->spawnat += 20;
     }
-    SDL_Rect r; r.x = p->o.posx1; r.y = p->o.posy1; r.w = p->o.posx2-p->o.posx1; r.h = p->o.posy2-p->o.posy1;
-    SDL_SetRenderDrawColor(gv.renderer, p->r, p->g, p->b, 255);
-    SDL_RenderDrawRect(gv.renderer, &r);
-    SDL_RenderFillRect(gv.renderer, &r);
+    sprintf(buffer, "../assets/perc%d.png", p->type);
+    draw_Texture(buffer, &p->o.posx1, &p->o.posy1);
   }
 }
 
@@ -191,7 +218,7 @@ void draw_GameOver(){
   sprintf(buffer, "Time played: %s", format_Time(gv.timeend-gv.timestart));
   write_Text(gv.renderer, "Game over", gv.dim.width/2-120, 20, 50);
   write_Text(gv.renderer, buffer, 20, 85, 25);
-  write_Text(gv.renderer, "Press ESC to go back.", 20, 440, 20);
+  write_Text(gv.renderer, "Press ESC to go back.", 20, 534, 20);
 
   if (gv.mode){
     if (gv.p1.lifes>0) write_Text(gv.renderer, "BLUE WINS!", 20, 150, 90);
@@ -222,97 +249,37 @@ void draw_GameOver(){
 */
 void draw_Field(){
   int count = 0;
-  int color = gv.b.speed*12;
-  if (color>255) color = 255;
-
   updateEntities();
   SDL_Rect r1; r1.x=-100; r1.y=-100; r1.w = 0; r1.h = 0;
   SDL_Rect r2; r2.x=-100; r2.y=-100; r2.w = 0; r2.h = 0;
   SDL_Rect r5; r5.x=-100; r5.y=-100; r5.w = 0; r5.h = 0;
   SDL_Rect r4; r4.x=-100; r4.y=-100; r4.w = 0; r4.h = 0;
-  if ((gv.mode && gv.p1.lifes>0) || !gv.mode) r1.x = gv.p1.o.posx1; r1.y = gv.p1.o.posy1; r1.w = gv.p1.o.posx2-gv.p1.o.posx1; r1.h = gv.p1.o.posy2-gv.p1.o.posy1;
-  if ((gv.mode && gv.p2.lifes>0) || !gv.mode) r2.x = gv.p2.o.posx1; r2.y = gv.p2.o.posy1; r2.w = gv.p2.o.posx2-gv.p2.o.posx1; r2.h = gv.p2.o.posy2-gv.p2.o.posy1;
-  if ((gv.mode && gv.p3.lifes>0) || !gv.mode) r4.x = gv.p3.o.posx1; r4.y = gv.p3.o.posy1; r4.w = gv.p3.o.posx2-gv.p3.o.posx1; r4.h = gv.p3.o.posy2-gv.p3.o.posy1;
-  if ((gv.mode && gv.p4.lifes>0) || !gv.mode) r5.x = gv.p4.o.posx1; r5.y = gv.p4.o.posy1; r5.w = gv.p4.o.posx2-gv.p4.o.posx1; r5.h = gv.p4.o.posy2-gv.p4.o.posy1;
-  SDL_Rect r3; r3.x = gv.b.o.posx1; r3.y = gv.b.o.posy1; r3.w = gv.b.o.posx2-gv.b.o.posx1; r3.h = gv.b.o.posy2-gv.b.o.posy1;
+  if ((gv.mode && gv.p1.lifes>0) || !gv.mode){ r1.x = gv.p1.o.posx1; r1.y = gv.p1.o.posy1; r1.w = gv.p1.o.posx2-gv.p1.o.posx1; r1.h = gv.p1.o.posy2-gv.p1.o.posy1;}
+  if ((gv.mode && gv.p2.lifes>0) || !gv.mode){ r2.x = gv.p2.o.posx1; r2.y = gv.p2.o.posy1; r2.w = gv.p2.o.posx2-gv.p2.o.posx1; r2.h = gv.p2.o.posy2-gv.p2.o.posy1;}
+  if ((gv.mode && gv.p3.lifes>0) || !gv.mode){ r4.x = gv.p3.o.posx1; r4.y = gv.p3.o.posy1; r4.w = gv.p3.o.posx2-gv.p3.o.posx1; r4.h = gv.p3.o.posy2-gv.p3.o.posy1;}
+  if ((gv.mode && gv.p4.lifes>0) || !gv.mode){ r5.x = gv.p4.o.posx1; r5.y = gv.p4.o.posy1; r5.w = gv.p4.o.posx2-gv.p4.o.posx1; r5.h = gv.p4.o.posy2-gv.p4.o.posy1;}
+  
+  // Drawing the framework
+  SDL_SetRenderDrawColor(gv.renderer, 0, 0, 255, 255);
+  SDL_RenderFillRect(gv.renderer, &r1);
+  SDL_RenderDrawLine(gv.renderer, gv.neck.l4.posx1, gv.neck.l4.posy1, gv.neck.l4.posx2, gv.neck.l4.posy2);
+  SDL_SetRenderDrawColor(gv.renderer, 255, 0, 0, 255);
+  SDL_RenderFillRect(gv.renderer, &r2);
+  SDL_RenderDrawLine(gv.renderer, gv.neck.l2.posx1, gv.neck.l2.posy1, gv.neck.l2.posx2, gv.neck.l2.posy2);
+  SDL_SetRenderDrawColor(gv.renderer, 0, 255, 0, 255);
+  SDL_RenderFillRect(gv.renderer, &r4);
+  SDL_RenderDrawLine(gv.renderer, gv.neck.l6.posx1, gv.neck.l6.posy1, gv.neck.l6.posx2, gv.neck.l6.posy2);
+  SDL_SetRenderDrawColor(gv.renderer, 255, 0, 255, 255);
+  SDL_RenderFillRect(gv.renderer, &r5);
+  SDL_RenderDrawLine(gv.renderer, gv.neck.l8.posx1, gv.neck.l8.posy1, gv.neck.l8.posx2, gv.neck.l8.posy2);
+
+  draw_Texture(get_Ball_Asset(), &gv.b.o.posx1, &gv.b.o.posy1);
 
   SDL_SetRenderDrawColor(gv.renderer, 255, 255, 0, 255);
-
-  // Drawing the framework depending on the selected player
-  switch(gv.player){
-    case 3 :
-      SDL_SetRenderDrawColor(gv.renderer, 0, 0, 255, 255);
-      SDL_RenderDrawRect(gv.renderer, &r1);
-      SDL_RenderFillRect(gv.renderer, &r1);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l4.posx1, gv.neck.l4.posy1, gv.neck.l4.posx2, gv.neck.l4.posy2);
-      SDL_SetRenderDrawColor(gv.renderer, 255, 0, 0, 255);
-      SDL_RenderDrawRect(gv.renderer, &r2);
-      SDL_RenderFillRect(gv.renderer, &r2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l2.posx1, gv.neck.l2.posy1, gv.neck.l2.posx2, gv.neck.l2.posy2);
-      
-      SDL_SetRenderDrawColor(gv.renderer, 0, 255, 0, 255);
-      SDL_RenderDrawRect(gv.renderer, &r4);
-      SDL_RenderFillRect(gv.renderer, &r4);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l6.posx1, gv.neck.l6.posy1, gv.neck.l6.posx2, gv.neck.l6.posy2);
-
-      SDL_SetRenderDrawColor(gv.renderer, color, 100, 0, 255);
-      SDL_RenderDrawRect(gv.renderer, &r3);
-      SDL_RenderFillRect(gv.renderer, &r3);
-
-      SDL_SetRenderDrawColor(gv.renderer, 255, 255, 0, 255);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l1.posx1, gv.neck.l1.posy1, gv.neck.l1.posx2, gv.neck.l1.posy2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l3.posx1, gv.neck.l3.posy1, gv.neck.l3.posx2, gv.neck.l3.posy2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l5.posx1, gv.neck.l5.posy1, gv.neck.l5.posx2, gv.neck.l5.posy2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l7.posx1, gv.neck.l7.posy1, gv.neck.l7.posx2, gv.neck.l7.posy2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l8.posx1, gv.neck.l8.posy1, gv.neck.l8.posx2, gv.neck.l8.posy2);
-      break;
-    case 4 :
-      SDL_SetRenderDrawColor(gv.renderer, 0, 0, 255, 255);
-      SDL_RenderDrawRect(gv.renderer, &r1);
-      SDL_RenderFillRect(gv.renderer, &r1);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l4.posx1, gv.neck.l4.posy1, gv.neck.l4.posx2, gv.neck.l4.posy2);
-      SDL_SetRenderDrawColor(gv.renderer, 255, 0, 0, 255);
-      SDL_RenderDrawRect(gv.renderer, &r2);
-      SDL_RenderFillRect(gv.renderer, &r2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l2.posx1, gv.neck.l2.posy1, gv.neck.l2.posx2, gv.neck.l2.posy2);
-      SDL_SetRenderDrawColor(gv.renderer, 0, 255, 0, 255);
-      SDL_RenderDrawRect(gv.renderer, &r4);
-      SDL_RenderFillRect(gv.renderer, &r4);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l6.posx1, gv.neck.l6.posy1, gv.neck.l6.posx2, gv.neck.l6.posy2);
-      SDL_SetRenderDrawColor(gv.renderer, 255, 0, 255, 255);
-      SDL_RenderDrawRect(gv.renderer, &r5);
-      SDL_RenderFillRect(gv.renderer, &r5);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l8.posx1, gv.neck.l8.posy1, gv.neck.l8.posx2, gv.neck.l8.posy2);
-
-      SDL_SetRenderDrawColor(gv.renderer, color, 100, 0, 255);
-      SDL_RenderDrawRect(gv.renderer, &r3);
-      SDL_RenderFillRect(gv.renderer, &r3);
-
-      SDL_SetRenderDrawColor(gv.renderer, 255, 255, 0, 255);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l1.posx1, gv.neck.l1.posy1, gv.neck.l1.posx2, gv.neck.l1.posy2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l3.posx1, gv.neck.l3.posy1, gv.neck.l3.posx2, gv.neck.l3.posy2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l5.posx1, gv.neck.l5.posy1, gv.neck.l5.posx2, gv.neck.l5.posy2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l7.posx1, gv.neck.l7.posy1, gv.neck.l7.posx2, gv.neck.l7.posy2);
-      break;
-    default:
-      SDL_SetRenderDrawColor(gv.renderer, 0, 0, 255, 255);
-      SDL_RenderDrawRect(gv.renderer, &r1);
-      SDL_RenderFillRect(gv.renderer, &r1);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l4.posx1, gv.neck.l4.posy1, gv.neck.l4.posx2, gv.neck.l4.posy2);
-      SDL_SetRenderDrawColor(gv.renderer, 255, 0, 0, 255);
-      SDL_RenderDrawRect(gv.renderer, &r2);
-      SDL_RenderFillRect(gv.renderer, &r2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l2.posx1, gv.neck.l2.posy1, gv.neck.l2.posx2, gv.neck.l2.posy2);
-
-      SDL_SetRenderDrawColor(gv.renderer, color, 100, 0, 255);
-      SDL_RenderDrawRect(gv.renderer, &r3);
-      SDL_RenderFillRect(gv.renderer, &r3);
-
-      SDL_SetRenderDrawColor(gv.renderer, 255, 255, 0, 255);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l1.posx1, gv.neck.l1.posy1, gv.neck.l1.posx2, gv.neck.l1.posy2);
-      SDL_RenderDrawLine(gv.renderer, gv.neck.l3.posx1, gv.neck.l3.posy1, gv.neck.l3.posx2, gv.neck.l3.posy2);
-      break;
-  }
+  SDL_RenderDrawLine(gv.renderer, gv.neck.l1.posx1, gv.neck.l1.posy1, gv.neck.l1.posx2, gv.neck.l1.posy2);
+  SDL_RenderDrawLine(gv.renderer, gv.neck.l3.posx1, gv.neck.l3.posy1, gv.neck.l3.posx2, gv.neck.l3.posy2);
+  SDL_RenderDrawLine(gv.renderer, gv.neck.l5.posx1, gv.neck.l5.posy1, gv.neck.l5.posx2, gv.neck.l5.posy2);
+  SDL_RenderDrawLine(gv.renderer, gv.neck.l7.posx1, gv.neck.l7.posy1, gv.neck.l7.posx2, gv.neck.l7.posy2);
   // Drawing Text
   if (gv.mode){
     // checking for game over
@@ -339,9 +306,9 @@ void draw_Field(){
   }
   if (gv.player>3){
     sprintf(buffer, "Purple: %d", gv.p4.lifes);
-    write_Text(gv.renderer, buffer, 320, 25, 20);
+    write_Text(gv.renderer, buffer, 340, 25, 20);
   }
-  write_Text(gv.renderer, "Press ESC to go back", 420, 5, 20);
+  write_Text(gv.renderer, "Press ESC to go back", 824, 5, 20);
 
   // Drawing percs
   spawn_Perc(&gv.e1);
@@ -350,8 +317,6 @@ void draw_Field(){
   spawn_Perc(&gv.e4);
   spawn_Perc(&gv.e5);
   spawn_Perc(&gv.e6);
-
-  SDL_SetRenderDrawColor(gv.renderer, 0, 0, 0, 255);
 }
 /* Game drawing functions end */
 
@@ -366,25 +331,27 @@ void draw_Field(){
 */
 float checkCollision(struct Object *o1, struct Object *o2, int flag){
   int left, right, top, bottom;
-  left = o2->posx1-1;
-  right = o2->posx2+1;
-  top = o2->posy1-1;
-  bottom = o2->posy2+1;
+  left = o2->posx1;
+  right = o2->posx2;
+  top = o2->posy1;
+  bottom = o2->posy2;
   SDL_Rect r1; r1.x = o1->posx1; r1.y = o1->posy1; r1.w = o1->posx2-o1->posx1; r1.h = o1->posy2-o1->posy1;
-  if (flag){
+  if (flag==1){
     if (SDL_IntersectRectAndLine(&r1, &left, &top, &right, &bottom))
       return acos((-(o2->posy2-o2->posy1))/sqrt(((o2->posx2-o2->posx1)*(o2->posx2-o2->posx1)) + ((o2->posy2-o2->posy1)*(o2->posy2-o2->posy1))));
     return 999;
   }
-  if (SDL_IntersectRectAndLine(&r1, &left, &top, &right, &top))
-    return 0.5*PI;
-  if (SDL_IntersectRectAndLine(&r1, &left, &bottom, &right, &bottom))
-    return 0.5*PI;
   if (SDL_IntersectRectAndLine(&r1, &left, &top, &left, &bottom))
     return acos(((o2->posy2-o2->posy1))/sqrt(((o2->posy2-o2->posy1)*(o2->posy2-o2->posy1))));
   if (SDL_IntersectRectAndLine(&r1, &right, &top, &right, &bottom))
     return acos(((o2->posy2-o2->posy1))/sqrt(((o2->posy2-o2->posy1)*(o2->posy2-o2->posy1))));
-  return 999;
+  if (SDL_IntersectRectAndLine(&r1, &left, &top, &right, &top))
+    return 0.5*PI;
+  if (SDL_IntersectRectAndLine(&r1, &left, &bottom, &right, &bottom))
+    return 0.5*PI;
+  if (flag==2)
+    return 999;
+  return checkCollision(o2, o1, 2);
 }
 
 /*
@@ -492,14 +459,14 @@ void move_Ball(){
   gv.b.o.posx2 += sin(radian);
   gv.b.o.posy2 += -cos(radian);
 
-  if (frames>=3*FRAMES_PER_SECOND){
+  if (frames>=2*FRAMES_PER_SECOND){
     frames = 0;
     if (gv.b.speed<26)
       gv.b.speed += 1;
   }
 
   // Hack incase it flies of through the borders
-  if (gv.b.o.posx1<0 || gv.b.o.posx1>640 || gv.b.o.posy1<0 || gv.b.o.posy1>480)
+  if (gv.b.o.posx1<0 || gv.b.o.posx1>gv.dim.width || gv.b.o.posy1<0 || gv.b.o.posy1>gv.dim.height)
     respawn_Ball(0);
 }
 /* Physics end */
@@ -516,7 +483,7 @@ void move_Player(struct Player *p, int dirx, int diry){
   p->o.posy2 += diry;
   p->o.posx1 += dirx;
   p->o.posx2 += dirx;
-  if ((checkCollision(&p->o, &gv.neck.l1, 1)<360) || (checkCollision(&p->o, &gv.neck.l3, 1)<360) || (checkCollision(&p->o, &gv.neck.l5, 1)<360) || (checkCollision(&p->o, &gv.neck.l7, 1)<360)){
+  if ((checkCollision(&p->o, &gv.neck.l1, 1)<360) || (checkCollision(&p->o, &gv.neck.l3, 1)<360) || (checkCollision(&p->o, &gv.neck.l5, 1)<360) || (checkCollision(&p->o, &gv.neck.l7, 1)<360) || (checkCollision(&p->o, &gv.b.o, 0)<360)){
     p->o.posy1 -= diry;
     p->o.posy2 -= diry;
     p->o.posx1 -= dirx;
@@ -531,13 +498,16 @@ void move_Player(struct Player *p, int dirx, int diry){
 */
 void respawn_Ball(struct Player *p){
   if (p != NULL){
-    playSound(wav[rand()%5], SDL_MIX_MAXVOLUME / 2);
+    if (gv.b.lastHit!=gv.b.lastGoal)
+      gv.b.lastGoal = gv.b.lastHit;
+    playSound(wav[gv.b.lastGoal->anim], SDL_MIX_MAXVOLUME / 2);
+    if (gv.b.lastGoal->anim<4) gv.b.lastGoal->anim++;
     if (gv.mode) p->lifes--;
     else p->lifes++;
   }
   gv.b = (struct Ball){
-    .o = (struct Object){.posx1 = 315,.posy1 = 260,.posx2 = 325,.posy2 = 270,},
-    .speed = 4, .angle = rand()%360, .lastHit = NULL
+    .o = (struct Object){.posx1 = 315,.posy1 = 260,.posx2 = 335,.posy2 = 280,},
+    .speed = 4, .angle = rand()%360, .lastHit = &gv.p1, .lastGoal = &gv.p1
   };
 }
 
@@ -553,6 +523,8 @@ void updateEntities(){
   gv.p2.o.posy2 = gv.p2.o.posy1+gv.p2.size;
   gv.p3.o.posx2 = gv.p3.o.posx1+gv.p3.size;
   gv.p4.o.posx2 = gv.p4.o.posx1+gv.p4.size;
+
+  for (int i=0; i<gv.b.speed; i++) move_Ball();
 
   if (gv.invert==1){
     if (ksa[SDL_SCANCODE_RIGHT]) move_Player(&gv.p1, 0, gv.p1.speed);
@@ -579,8 +551,6 @@ void updateEntities(){
     if (ksa[SDL_SCANCODE_G]) move_Player(&gv.p4, gv.p4.speed, 0);
     if (ksa[SDL_SCANCODE_J]) move_Player(&gv.p4, -gv.p4.speed, 0);
   }
-
-  for (int i=0; i<gv.b.speed; i++) move_Ball();
 }
 
 /*
@@ -591,7 +561,6 @@ void updateEntities(){
 */
 void draw_Game(){
   SDL_SetRenderDrawColor(gv.renderer, 0, 0, 0, 255); // Background color
-
   while (1) {
       SDL_Delay(1000/FRAMES_PER_SECOND);
       SDL_Event e;
@@ -643,6 +612,15 @@ void draw_Game(){
           }
       }
       SDL_RenderClear(gv.renderer);
+
+      // Render background
+      SDL_Surface * surface = IMG_Load("../assets/background.jpg");
+      SDL_Texture * texture = SDL_CreateTextureFromSurface(gv.renderer, surface);
+
+      SDL_RenderCopy(gv.renderer, texture, NULL, NULL);
+      SDL_DestroyTexture(texture);
+      SDL_FreeSurface(surface);
+
       switch(gv.state){
         case 1:
           draw_Field();
@@ -676,87 +654,94 @@ void draw_Game(){
 * Resets speed, lifes and orientation
 * Sets first spawntimers for percs.
 */
+// 680 -> 1024
+// 344-46
+// 298
+// 149
+// 195
+// 347-50 = 294
+// 105 + 147 = 252
 void set_Game_Vars(){
   gv.invert = 1;
   switch(gv.player){
     case 3 :
       gv.p1 = (struct Player){
-        .o = (struct Object){.posx1 = 50,.posy1 = 230,.posx2 = 70,.posy2 = 280,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 50,.posy1 = 252,.posx2 = 70,.posy2 = 302,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.p2 = (struct Player){
-        .o = (struct Object){.posx1 = 570,.posy1 = 230,.posx2 = 590,.posy2 = 280,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 952,.posy1 = 252,.posx2 = 972,.posy2 = 302,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.p3 = (struct Player){
-        .o = (struct Object){.posx1 = 295,.posy1 = 80,.posx2 = 345,.posy2 = 100,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 468,.posy1 = 80,.posx2 = 523,.posy2 = 100,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.p4 = (struct Player){
         .o = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0,},
-        .size = 50, .lifes = 0, .speed = 5
+        .size = 50, .lifes = 0, .speed = 5, .anim = 0
       };
       gv.neck = (struct Neck){
-        .l1 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 170,.posy2 = 50},
-        .l2 = (struct Object){.posx1 = 620,.posy1 = 105,.posx2 = 620,.posy2 = 405},
-        .l3 = (struct Object){.posx1 = 470,.posy1 = 50,.posx2 = 620,.posy2 = 105},
-        .l4 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 20,.posy2 = 405},
-        .l5 = (struct Object){.posx1 = 470,.posy1 = 460,.posx2 = 620,.posy2 = 405},
-        .l6 = (struct Object){.posx1 = 170,.posy1 = 50,.posx2 = 470,.posy2 = 50},
-        .l7 = (struct Object){.posx1 = 20,.posy1 = 405,.posx2 = 170,.posy2 = 460},
-        .l8 = (struct Object){.posx1 = 170,.posy1 = 460,.posx2 = 470,.posy2 = 460}
+        .l1 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 319,.posy2 = 50},
+        .l2 = (struct Object){.posx1 = 1004,.posy1 = 105,.posx2 = 1004,.posy2 = 452},
+        .l3 = (struct Object){.posx1 = 665,.posy1 = 50,.posx2 = 1004,.posy2 = 105},
+        .l4 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 20,.posy2 = 452},
+        .l5 = (struct Object){.posx1 = 665,.posy1 = 554,.posx2 = 1004,.posy2 = 452},
+        .l6 = (struct Object){.posx1 = 319,.posy1 = 50,.posx2 = 665,.posy2 = 50},
+        .l7 = (struct Object){.posx1 = 20,.posy1 = 452,.posx2 = 319,.posy2 = 554},
+        .l8 = (struct Object){.posx1 = 319,.posy1 = 554,.posx2 = 665,.posy2 = 554}
       };
       break;
     case 4: 
       gv.p1 = (struct Player){
-        .o = (struct Object){.posx1 = 50,.posy1 = 230,.posx2 = 70,.posy2 = 280,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 50,.posy1 = 252,.posx2 = 70,.posy2 = 302,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.p2 = (struct Player){
-        .o = (struct Object){.posx1 = 570,.posy1 = 230,.posx2 = 590,.posy2 = 280,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 952,.posy1 = 252,.posx2 = 972,.posy2 = 302,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.p3 = (struct Player){
-        .o = (struct Object){.posx1 = 295,.posy1 = 80,.posx2 = 345,.posy2 = 100,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 468,.posy1 = 80,.posx2 = 523,.posy2 = 100,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.p4 = (struct Player){
-        .o = (struct Object){.posx1 = 295,.posy1 = 410,.posx2 = 345,.posy2 = 430,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 468,.posy1 = 504,.posx2 = 523,.posy2 = 524,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.neck = (struct Neck){
-        .l1 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 170,.posy2 = 50},
-        .l2 = (struct Object){.posx1 = 620,.posy1 = 105,.posx2 = 620,.posy2 = 405},
-        .l3 = (struct Object){.posx1 = 470,.posy1 = 50,.posx2 = 620,.posy2 = 105},
-        .l4 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 20,.posy2 = 405},
-        .l5 = (struct Object){.posx1 = 470,.posy1 = 460,.posx2 = 620,.posy2 = 405},
-        .l6 = (struct Object){.posx1 = 170,.posy1 = 50,.posx2 = 470,.posy2 = 50},
-        .l7 = (struct Object){.posx1 = 20,.posy1 = 405,.posx2 = 170,.posy2 = 460},
-        .l8 = (struct Object){.posx1 = 170,.posy1 = 460,.posx2 = 470,.posy2 = 460}
+        .l1 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 319,.posy2 = 50},
+        .l2 = (struct Object){.posx1 = 1004,.posy1 = 105,.posx2 = 1004,.posy2 = 452},
+        .l3 = (struct Object){.posx1 = 665,.posy1 = 50,.posx2 = 1004,.posy2 = 105},
+        .l4 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 20,.posy2 = 452},
+        .l5 = (struct Object){.posx1 = 665,.posy1 = 554,.posx2 = 1004,.posy2 = 452},
+        .l6 = (struct Object){.posx1 = 319,.posy1 = 50,.posx2 = 665,.posy2 = 50},
+        .l7 = (struct Object){.posx1 = 20,.posy1 = 452,.posx2 = 319,.posy2 = 554},
+        .l8 = (struct Object){.posx1 = 319,.posy1 = 554,.posx2 = 665,.posy2 = 554}
       };
       break;
     default :
       gv.p1 = (struct Player){
-        .o = (struct Object){.posx1 = 50,.posy1 = 230,.posx2 = 70,.posy2 = 280,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 50,.posy1 = 277,.posx2 = 70,.posy2 = 327,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.p2 = (struct Player){
-        .o = (struct Object){.posx1 = 570,.posy1 = 230,.posx2 = 590,.posy2 = 280,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5
+        .o = (struct Object){.posx1 = 954,.posy1 = 277,.posx2 = 974,.posy2 = 327,},
+        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
       };
       gv.p3 = (struct Player){
         .o = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0,},
-        .size = 50, .lifes = 0, .speed = 5
+        .size = 50, .lifes = 0, .speed = 5, .anim = 0
       };
       gv.p4 = (struct Player){
         .o = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0,},
-        .size = 50, .lifes = 0, .speed = 5
+        .size = 50, .lifes = 0, .speed = 5, .anim = 0
       };
       gv.neck = (struct Neck){
-        .l1 = (struct Object){.posx1 = 20,.posy1 = 50,.posx2 = 620,.posy2 = 50},
-        .l2 = (struct Object){.posx1 = 620,.posy1 = 50,.posx2 = 620,.posy2 = 460},
-        .l3 = (struct Object){.posx1 = 20,.posy1 = 460,.posx2 = 620,.posy2 = 460},
-        .l4 = (struct Object){.posx1 = 20,.posy1 = 460,.posx2 = 20,.posy2 = 50},
+        .l1 = (struct Object){.posx1 = 20,.posy1 = 50,.posx2 = 1004,.posy2 = 50},
+        .l2 = (struct Object){.posx1 = 1004,.posy1 = 50,.posx2 = 1004,.posy2 = 554},
+        .l3 = (struct Object){.posx1 = 20,.posy1 = 554,.posx2 = 1004,.posy2 = 554},
+        .l4 = (struct Object){.posx1 = 20,.posy1 = 554,.posx2 = 20,.posy2 = 50},
         .l5 = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0},
         .l6 = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0},
         .l7 = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0},
@@ -805,10 +790,11 @@ void init_Game(){
   if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
     initAudio();
     playMusic("../sound/song.wav", SDL_MIX_MAXVOLUME/2);
-    gv.window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED,
+    gv.window = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_UNDEFINED,
       SDL_WINDOWPOS_UNDEFINED, gv.dim.width, gv.dim.height,
       SDL_WINDOW_SHOWN);
     if (gv.window) {  
+      SDL_SetWindowIcon(gv.window, IMG_Load("../assets/pong.png"));
       gv.renderer = SDL_CreateRenderer(gv.window, -1,
         SDL_RENDERER_ACCELERATED);
       if (gv.renderer) {
@@ -831,7 +817,7 @@ int main(int argc, char* args[]){
   gv.mode = 1;
   gv.invert = 1;
   gv.dim = (struct Dim){
-    .width = 640,.height = 480
+    .width = 1024,.height = 576
   };
   gv.e1.type = 1; gv.e1.r = 255; gv.e1.g = 0; gv.e1.b = 0;
   gv.e2.type = 2; gv.e2.r = 0; gv.e2.g = 255; gv.e2.b = 0;

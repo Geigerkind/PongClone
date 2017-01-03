@@ -11,13 +11,14 @@ struct Object{
 
 struct Player{
   struct Object o;
-  int size, lifes, speed;
+  int size, lifes, speed, anim;
 };
 
 struct Ball{
   struct Object o;
   float speed, angle;
   struct Player *lastHit;
+  struct Player *lastGoal;
 };
 
 struct Perc{
@@ -74,5 +75,7 @@ void respawn_Ball(struct Player *p);
 void spawn_Perc(struct Perc *p);
 void despawn_Perc(struct Perc *p);
 char* format_Time(int t);
+char* get_Ball_Asset();
+void draw_Texture(char *path, float *x, float *y);
 
 #endif
