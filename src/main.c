@@ -1,12 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <SDL.h>
-#include <SDL_ttf.h>
-#include <SDL_image.h>
-#include <time.h>
-#include <math.h>
-#include "audio.h"
 #include "main.h"
 
 #define PI 3.14159265358979323
@@ -809,7 +800,7 @@ void init_Game(){
 }
 
 /*
-* Initialses the Game struct and starts the game.
+* Initialises the Game struct and starts the game.
 */
 int main(int argc, char* args[]){
   gv.state = 0;
