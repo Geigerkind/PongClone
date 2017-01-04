@@ -247,8 +247,8 @@ void draw_Field(){
   SDL_Rect r4; r4.x=-100; r4.y=-100; r4.w = 0; r4.h = 0;
   if ((gv.mode && gv.p1.lifes>0) || !gv.mode){ r1.x = gv.p1.o.posx1; r1.y = gv.p1.o.posy1; r1.w = gv.p1.o.posx2-gv.p1.o.posx1; r1.h = gv.p1.o.posy2-gv.p1.o.posy1;}
   if ((gv.mode && gv.p2.lifes>0) || !gv.mode){ r2.x = gv.p2.o.posx1; r2.y = gv.p2.o.posy1; r2.w = gv.p2.o.posx2-gv.p2.o.posx1; r2.h = gv.p2.o.posy2-gv.p2.o.posy1;}
-  if ((gv.mode && gv.p3.lifes>0) || !gv.mode){ r4.x = gv.p3.o.posx1; r4.y = gv.p3.o.posy1; r4.w = gv.p3.o.posx2-gv.p3.o.posx1; r4.h = gv.p3.o.posy2-gv.p3.o.posy1;}
-  if ((gv.mode && gv.p4.lifes>0) || !gv.mode){ r5.x = gv.p4.o.posx1; r5.y = gv.p4.o.posy1; r5.w = gv.p4.o.posx2-gv.p4.o.posx1; r5.h = gv.p4.o.posy2-gv.p4.o.posy1;}
+  if ((gv.mode && gv.p3.lifes>0) || !gv.mode){ r4.x = gv.p3.o.posx1; r4.y = gv.p3.o.posy1; r4.w = gv.p3.o.posx2-gv.p3.o.posx1-5; r4.h = gv.p3.o.posy2-gv.p3.o.posy1;}
+  if ((gv.mode && gv.p4.lifes>0) || !gv.mode){ r5.x = gv.p4.o.posx1; r5.y = gv.p4.o.posy1; r5.w = gv.p4.o.posx2-gv.p4.o.posx1-5; r5.h = gv.p4.o.posy2-gv.p4.o.posy1;}
   
   // Drawing the framework
   SDL_SetRenderDrawColor(gv.renderer, 0, 0, 255, 255);
@@ -489,16 +489,19 @@ void move_Player(struct Player *p, int dirx, int diry){
 */
 void respawn_Ball(struct Player *p){
   if (p != NULL){
-    if (gv.b.lastHit!=gv.b.lastGoal)
-      gv.b.lastGoal = gv.b.lastHit;
-    playSound(wav[gv.b.lastGoal->anim], SDL_MIX_MAXVOLUME / 2);
-    if (gv.b.lastGoal->anim<4) gv.b.lastGoal->anim++;
+    if (gv.b.lastHit!=gv.lastGoal) gv.lastGoal = gv.b.lastHit;
+    if (gv.lastGoal != NULL){
+      playSound(wav[gv.lastGoal->anim], SDL_MIX_MAXVOLUME / 2);
+      if (gv.lastGoal->anim<4) gv.lastGoal->anim++;
+    }else{
+      playSound(wav[0], SDL_MIX_MAXVOLUME / 2);
+    }
     if (gv.mode) p->lifes--;
     else p->lifes++;
   }
   gv.b = (struct Ball){
     .o = (struct Object){.posx1 = 315,.posy1 = 260,.posx2 = 335,.posy2 = 280,},
-    .speed = 4, .angle = rand()%360, .lastHit = &gv.p1, .lastGoal = &gv.p1
+    .speed = 4, .angle = rand()%360, .lastHit = NULL
   };
 }
 
@@ -654,6 +657,7 @@ void draw_Game(){
 // 105 + 147 = 252
 void set_Game_Vars(){
   gv.invert = 1;
+  gv.lastGoal = NULL;
   switch(gv.player){
     case 3 :
       gv.p1 = (struct Player){

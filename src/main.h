@@ -28,7 +28,6 @@ struct Ball{
   struct Object o;
   float speed, angle;
   struct Player *lastHit;
-  struct Player *lastGoal;
 };
 
 struct Perc{
@@ -64,6 +63,7 @@ struct Game{
   struct Perc e4;
   struct Perc e5;
   struct Perc e6;
+  struct Player *lastGoal;
 };
 
 void draw_menu();
