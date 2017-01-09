@@ -1,0 +1,194 @@
+\documentclass[a4paper, 10pt]{article}
+
+\usepackage{graphicx}
+\usepackage{ngerman}
+\usepackage{setspace}
+\usepackage{lmodern} % load vector font
+\usepackage[T1]{fontenc} % font encoding
+\usepackage[utf8]{inputenc} % input encoding
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{a4paper,left=21mm,right=21mm, top=2.4cm, bottom=2cm}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\usepackage{titlesec}
+
+\titleformat*{\section}{\large\bfseries}
+
+\lhead{Prozedurale Programmierung}
+\chead{Tom Dymel, Sonja David}
+\rhead{Wintersemester 16/17}
+\renewcommand{\headrulewidth}{0.1pt}
+
+\begin{document}
+
+\paragraph {\Large\bf  Teil 2: Design} 
+
+\section{Allgemeine Programmstruktur}
+{\bf i) Aufbau des Programmes}\medskip\\
+Sobald das Spiel initialisiert wurde, liegt die Kontrolle in der Schleife von \texttt{draw\_Game}, der Funktion, die die Eingaben verwaltet und je nach aktuellem Zustand das Spiel zeichnet  bzw. die zugehörigen Funktionen dazu aufruft. Das Spiel wird beendet, sobald sobald die Schleife durch den Benutzerinput unterbrochen wird. Innerhalb dieser Funktionen werden wiederum Funktionen aufgerufen, um die einzelnen Oberflächen des Spiels zu zeichnen, den Benutzerinput zu verwalten und die Spielregeln und die Physik des Balles umzusetzen.
+\begin{itemize}
+\item includes (\texttt{SDL.h}, \texttt{audio.h} etc., die Initialisierung der Structs und die Prototypen der Funktionen befinden sich in einer eigenen Library \texttt{main.h})
+\item Initialisierung der Globals
+\item Definition der Funktionen
+\item \texttt{main}-Funktion
+\end{itemize}
+ \medskip
+{\bf ii) Die wichtigsten Funktionen im Überblick}\medskip\\
+Displayfunktionen
+\begin{itemize}
+\item \texttt{void write\_Text(SDL\_Renderer *renderer, char *text, int posx, int posy, int size).} 
+\item \texttt{char* format\_Time(int t).}
+\end{itemize}
+\medskip
+Funktionen zur Darstellung der Menüs
+\begin{itemize}
+\item \texttt{void draw\_Menu(void).} Zeichnet das Menü
+\item \texttt{void draw\_PlayerSelection(void).} Spieleranzahl auswählen
+\item \texttt{void draw\_ModeSelection(void).} Spielmodus auswählen, wirkt sich aus auf draw\_Field (Punkteanzeige, Abbruchkriterium), set\_Game\_Vars (Leben der Spieler werden auf 0 oder 10 gesetzt), draw\_GameOver, respawn\_Ball (Leben der Spieler werden hier gezählt, je nach Modus auf- oder absteigend)
+\item \texttt{void draw\_Rules(void).} Gibt eine Übersicht über die Spielregeln
+\end{itemize}
+\medskip
+Funktionen zur Spieldarstellung
+\begin{itemize}
+\item \texttt{void spawn\_Perc(struct Perc *p).} Erzeugt Percs, zufällige Generierung eines Standortes
+\item \texttt{void despawn\_Perc(struct Perc *p).} Ausgeführt bei Abschuss des Percs, Perc verschwindet vom Spielfeld (mit Ausnahme der Barriere), eine neue Spawnzeit wird festgelegt
+\item \texttt{void draw\_GameOver(void).} Gewinnernotifikation (Abhängig vom Abbruchkriterium des Spielmodus)
+\item \texttt{void draw\_Field(void).} Zeichnet das Spielfeld in Abhängigkeit des Spielmodus, den Ball, die gespawnten Percs, die Spieler ect. nach den in set\_Game\_Vars vorher festgelegten Positionen (bzw. Spawnzeiten für die Percs)
+\end{itemize}
+\medskip
+Physikalische Funktionen
+\begin{itemize}
+\item \texttt{float checkCollision(struct Object *o1, struct Object *o2, int flag).} Überprüft ob Ball und Spieler oder Ball und Barrier ect. zusammenstoßen. Parameter sind die beiden zu vergleichenden Objekte (Rechteck, Reckteck oder Rechteck, Linie) und ein Integer, welcher angibt worauf die Objekte miteinander verglichen werden sollen.
+\item \texttt{void change\_Ball\_Direction(float angle).} Verändert die Richtung des Balles nach Kollision mit einem Objekt
+\item \texttt{void move\_Ball(void).} Updated die Position des Balles (Bewegung), ruft \texttt{checkCollision} für alle nötigen Objekte und die entsprechenden Funktionen für die verschiedenen Events auf (Respawn des Balles, Abspielen der Kommentare und Punkteverwaltung bei Tor eines Spielers, Aktivierung der Percs, Richtungsänderung des Balles bei Treffen auf Spielfeldgrenze o. Ä.)
+\end{itemize}
+\medskip
+Allgemeine Funktionen
+\begin{itemize}
+\item \texttt{void move\_player(struct Player *p, int dirx, int diry).} Updated die Positon der Spieler
+\item \texttt{void respawn\_Ball(struct Player *p).} Respawnt den Ball mit zufälliger Bewegungsrichtung, Punkteverwaltung (Welchem Spieler werden Punkte abgezogen bzw. angerechnet?), spielt die Kommentare beim Punktgewinn mit Hilfe der audio-Library ab
+\item \texttt{void updateEntities(void).} Positionen der Spieler und des Balles werden durch Aufruf der Funktionen \texttt{move\_Player} bzw. \texttt{move\_Ball} aktualisiert
+\item \texttt{void draw\_Game(void).} Verwaltet die verschiedenen zu zeichnenden Ebenen des  Spielmenüs, Tastatureingaben zum Navigieren werden eingelesen/verwaltet
+\item \texttt{void set\_Game\_Vars(void).} Stellt die Position, Geschwindigkeit und Leben der Spieler in Abhängigkeit von Modus und Spielerzahl ein, legt die anfängliche zufällige Spawnzeit der Percs fest
+\item \texttt{void init\_Game(void).} Initialisiert das Spiel, startet die SDL engine, die audio engine, die Hintergrundmusik und die Funktion \texttt{draw\_Game}, beendet SDL und audio engine
+\item \texttt{int main().} Das Gameobjekt und die verschiedenen Percobjekte werden hier initialisiert (Farbe, Typ)
+\end{itemize}
+\medskip
+{\bf iii) Zentrale (strukturierte) Datetypen}\medskip\\
+Idee: Das Programm pseudo-objektorientiert aufzubauen. D. h. wir arbeiten mit Objekten, aus denen wieder andere Objekte zusammengbaut werden, z. B. die Spieler (\texttt{struct Player}) und der Ball (\texttt{struct Ball}), welche im Kern aus \texttt{struct Object} aufgebaut werden. Dies gewährleistet, dass die Objekte miteinander verglichen werden können. Am Schluss wird alles in einem großen Objekt (\texttt{struct Game}) vereinigt.
+\begin{itemize}
+\item \texttt {{\bf struct Dim}}\\
+Beinhaltet die Höhe und Breite des Spielfeldes\medskip\\
+\texttt{struct Dim\{}
+
+\quad\texttt{int width, height;}
+
+\texttt{\};}\medskip
+
+\item \texttt {{\bf struct Object}}\\
+Anonymes Objekt als Grundlage für Player, Ball und Percs\medskip\\
+\texttt{struct Object\{}
+
+\quad \texttt{float posx1, posy1, posx2, posy2;}
+
+\texttt{\};}\medskip
+
+\item \texttt{{\bf struct Player}}\\
+Beinhaltet die Informationen eines Spielers\medskip\\
+\texttt{struct Player\{}
+
+\quad \texttt{struct Object o;} 
+
+\quad \texttt{int size, lifes, speed;}
+
+\texttt{\};}\medskip
+
+\item \texttt{{\bf struct Ball}}\\
+Beinhaltet die Informationen des Balles\medskip\\
+\texttt{struct Ball\{}
+
+\quad \texttt{struct Object o;}
+
+\quad \texttt{float speed, angle;}
+
+\quad \texttt{struct Player *lastHit;}
+
+\texttt{\};}
+
+\item \texttt{{\bf struct Perc}}\\
+Beinhaltet die Informationen eines Percs\medskip\\
+ \texttt{struct Perc\{}
+
+\quad \texttt{struct Object o;}
+
+\quad \texttt{int spawnat,type,r,g,b;}
+
+\texttt{\};}
+
+\item \texttt{{\bf struct Neck}}\\
+Beinhaltet die Positionen der Grenzen des maximalen 8-Ecks (Oktagon)\medskip\\
+ \texttt{struct Neck\{} \quad \quad \quad \textbackslash\textbackslash n-Eck
+
+\texttt{struct Object l1;}
+
+\quad \texttt{struct Object l2;}
+
+\quad \texttt{struct Object l3;}
+
+\quad \texttt{struct Object l4;}
+
+\quad \texttt{struct Object l5;}
+
+\quad \texttt{struct Object l6;}
+
+\quad \texttt{struct Object l7;}
+
+\quad \texttt{struct Object l8;}
+
+\texttt{\};}
+
+\item \texttt{{\bf struct Game}}\\
+Fasst alle Structs zusammen und vereinigt sie in ein Gamestruct, der alle Informationen beinhaltet, die das Spiel benötigt\medskip\\
+\texttt{struct Game\{}
+
+\quad \texttt{SDL\_Window *window;}
+
+\quad \texttt{SDL\_Renderer *renderer;}
+
+\quad \texttt{struct Ball b;}
+
+\quad \texttt{struct Player p1;}
+
+\quad \texttt{struct Player p2;}
+
+\quad \texttt{struct Player p3;}
+
+\quad \texttt{struct Player p4;}
+
+\quad \texttt{struct Dim dim;}
+
+\quad \texttt{struct Neck neck;}
+
+\quad \texttt{int state, player, mode, timestart, timeend, invert;}
+
+\quad \texttt{struct Perc e1;}
+
+\quad \texttt{struct Perc e2;}
+
+\quad \texttt{struct Perc e3;}
+
+\quad \texttt{struct Perc e4;}
+
+\quad \texttt{struct Perc e5;}
+
+\quad \texttt{struct Perc e6;}
+
+\quad \texttt{struct Player *lastGoal}
+
+\texttt{\};}
+\end{itemize}
+
+\end{document}

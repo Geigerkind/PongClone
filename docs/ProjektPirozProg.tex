@@ -1,0 +1,108 @@
+\documentclass[a4paper, 10pt]{article}
+
+\usepackage{graphicx}
+\usepackage{ngerman}
+\usepackage{setspace}
+\usepackage{lmodern} % load vector font
+\usepackage[T1]{fontenc} % font encoding
+\usepackage[utf8]{inputenc} % input encoding
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{a4paper,left=21mm,right=21mm, top=2.4cm, bottom=2cm}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\usepackage{titlesec}
+
+\titleformat*{\section}{\large\bfseries}
+
+\lhead{Prozedurale Programmierung}
+\chead{Tom Dymel, Sonja David}
+\rhead{Wintersemester 16/17}
+\renewcommand{\headrulewidth}{0.1pt}
+
+\begin{document}
+\begin{center}
+{\Large\bf Prozedurale Programmierung - Projektplanung}\bigskip
+
+{\large Projekt: Pong}\medskip
+
+{\large Tom Dymel, Sonja David}\medskip
+
+{\large tom.dymel@tuhh.de, sonja.david@tuhh.de}\medskip
+
+{\normalsize 12.01.2017}\medskip
+\end{center} 
+
+\paragraph {\Large\bf  Teil 1: Projektspezifikation} 
+\section{Spielregeln}
+Pong ist Multiplayer mit zwei, drei oder vier Spielern. Jedem Spieler wird ein Paddle auf einer Seite des n-Ecks zugewiesen. Der Spielball wird zwischen den Spielern hin- und zurückgepasst. Verlässt der Ball das Spielfeld, bekommt der Spieler der ihn durchgelassen hat einen Punkt bzw. verliert ein Leben. Spielziel ist es, so wenig Punkte wie möglich zu sammeln bzw. keine Leben zu verlieren. Perks, die z. B. die Ballgeschwindigkeit und die Größer der Paddles variieren, steigern den Spielspaß.
+
+\section{Spielerzahl $\&$ Spielfeld}
+\begin{itemize}
+\item 2 - 4 Spieler, die Eingabe erfolgt über zwei Pfeiltasten und weitere Tastenpaare (z. B. A und D) einer Computertastatur
+\item Das Spielfeld wird je nach Spielerzahl angepasst auf ein Rechteck bzw. Oktogon
+\end{itemize}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=12cm]{Spielfelder.png}
+\caption{Skizze der Spielfelder je nach Spielerzahl}
+\label{Spielfelder}
+\end{center}
+\end{figure}
+
+\section{Spielmodi (Abbrechkriterien)}
+\begin{itemize}
+\item Nach Spielzeit (5 min). Gewinner ist, wer die wenigsten Punkte bis zum Ablauf der Zeit sammelt.
+\item Nach Punkten (10 Leben). Es veliert derjenige, der zuerst alle Leben verliert. Gewinner ist der mit dem zu diesem Zeitpunkt höhsten Punktestand.
+\end{itemize}
+
+\section{Spielmenü}
+\begin{itemize}
+\item Spiel starten
+\item Modiauswahl
+\item Spielerzahl
+\item Regeln
+\item Spiel beenden
+\end{itemize}
+ 
+\section{Graphical User Interface}
+\begin{itemize}
+\item farbliche Kennzeichnung der Spieler, Wände etc
+\item Anzeige des Punktestandes
+\item Navigation (zum Menü zurück)
+\item Gewinner-Notifikation
+\end{itemize}
+
+\section{Perks}
+Verschiedenfarbige Quadrate, die auf dem Spielfeld nach eine gewissen Zeit zufällig erscheinen. Werden durch Berührung des Balles aktiviert. Wird ein Perk nach 20 Sekunden nicht aktiviert, ändert er seine Position. 
+\begin{itemize}
+\item Variieren der Geschwindigkeit des Balles
+\item Variieren der Geschwindigkeit desjenigen Spielers, mit dem letzten Ballkontakt vor der Aktivierung des Perks
+\item Variierung der Spielergröße
+\item Invertierung der Steuerung
+\item zeitweise Barrieren auf dem Spielfeld
+\item zufällige Richtungsänderung des Balles
+\end{itemize}
+
+
+\section{Ballgeschwindigkeit \textasciitilde ~Farbton}
+\begin{itemize}
+\item Zunahme der Ballgeschwindigkeit im Verlauf des Spiels, optisch unterstrichen durch schrittweise Änderung des Farbtons
+\end{itemize}
+
+\section{Sound}
+\begin{itemize}
+\item Kommentar in Form eines Sounds bei Punktgewinn
+\item Hintergrundmusik. Elektroswing o. Ä.
+\end{itemize}
+
+\section{Obligatorischer Bug}
+\begin{itemize}
+\item Spaß-Feature. Der Ball glitscht in den Spieler und springt innerhalb des Paddles hin und her. Der Spieler kann den Ball wieder freigeben, indem er seine Position verändert, und mit Glück einen fieses Ball erzeugen. ;)
+\end{itemize}
+\bigskip
+
+\end{document}
