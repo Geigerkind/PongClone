@@ -10,7 +10,7 @@ all: run
 Pong.exe: main.c audio.o
 	$(CC) $(CFLAGS) -o Pong.exe main.c audio.o $(LDFLAGS)
 
-audio.o: audio.o
+audio.o: audio.c
 	$(CC) $(CFLAGS) -c audio.c $(LDFLAGS)
 
 .PHONY: Pong.exe
