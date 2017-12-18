@@ -3,6 +3,8 @@
 #define PI 3.14159265358979323
 #define FRAMES_PER_SECOND 180
 #define TITLE "Pong"
+#define SPEED 10
+#define BALLSPEED 8
 
 /* GLOBALS */
 int frames = 0;
@@ -16,6 +18,7 @@ const char wav[5][40] = {
 char buffer[40];
 char cha[10];
 struct Game gv;
+SDL_Surface * BGsurface = NULL;
 /* GLOBALS END */
 
 /* FUNCTION DEFINITION */
@@ -501,7 +504,7 @@ void respawn_Ball(struct Player *p){
   }
   gv.b = (struct Ball){
     .o = (struct Object){.posx1 = 315,.posy1 = 260,.posx2 = 335,.posy2 = 280,},
-    .speed = 4, .angle = rand()%360, .lastHit = NULL
+    .speed = BALLSPEED, .angle = rand()%360, .lastHit = NULL
   };
 }
 
@@ -608,12 +611,12 @@ void draw_Game(){
       SDL_RenderClear(gv.renderer);
 
       // Render background
-      SDL_Surface * surface = IMG_Load("../assets/background.jpg");
-      SDL_Texture * texture = SDL_CreateTextureFromSurface(gv.renderer, surface);
+      //SDL_Surface * surface = IMG_Load("../assets/background.jpg");
+      SDL_Texture * texture = SDL_CreateTextureFromSurface(gv.renderer, BGsurface);
 
       SDL_RenderCopy(gv.renderer, texture, NULL, NULL);
       SDL_DestroyTexture(texture);
-      SDL_FreeSurface(surface);
+      //SDL_FreeSurface(surface);
 
       switch(gv.state){
         case 1:
@@ -662,19 +665,19 @@ void set_Game_Vars(){
     case 3 :
       gv.p1 = (struct Player){
         .o = (struct Object){.posx1 = 50,.posy1 = 252,.posx2 = 70,.posy2 = 302,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.p2 = (struct Player){
         .o = (struct Object){.posx1 = 952,.posy1 = 252,.posx2 = 972,.posy2 = 302,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.p3 = (struct Player){
         .o = (struct Object){.posx1 = 468,.posy1 = 80,.posx2 = 523,.posy2 = 100,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.p4 = (struct Player){
         .o = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0,},
-        .size = 50, .lifes = 0, .speed = 5, .anim = 0
+        .size = 50, .lifes = 0, .speed = SPEED, .anim = 0
       };
       gv.neck = (struct Neck){
         .l1 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 319,.posy2 = 50},
@@ -690,19 +693,19 @@ void set_Game_Vars(){
     case 4: 
       gv.p1 = (struct Player){
         .o = (struct Object){.posx1 = 50,.posy1 = 252,.posx2 = 70,.posy2 = 302,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.p2 = (struct Player){
         .o = (struct Object){.posx1 = 952,.posy1 = 252,.posx2 = 972,.posy2 = 302,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.p3 = (struct Player){
         .o = (struct Object){.posx1 = 468,.posy1 = 80,.posx2 = 523,.posy2 = 100,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.p4 = (struct Player){
         .o = (struct Object){.posx1 = 468,.posy1 = 504,.posx2 = 523,.posy2 = 524,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.neck = (struct Neck){
         .l1 = (struct Object){.posx1 = 20,.posy1 = 105,.posx2 = 319,.posy2 = 50},
@@ -718,19 +721,19 @@ void set_Game_Vars(){
     default :
       gv.p1 = (struct Player){
         .o = (struct Object){.posx1 = 50,.posy1 = 277,.posx2 = 70,.posy2 = 327,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.p2 = (struct Player){
         .o = (struct Object){.posx1 = 954,.posy1 = 277,.posx2 = 974,.posy2 = 327,},
-        .size = 50, .lifes = gv.mode*10, .speed = 5, .anim = 0
+        .size = 50, .lifes = gv.mode*10, .speed = SPEED, .anim = 0
       };
       gv.p3 = (struct Player){
         .o = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0,},
-        .size = 50, .lifes = 0, .speed = 5, .anim = 0
+        .size = 50, .lifes = 0, .speed = SPEED, .anim = 0
       };
       gv.p4 = (struct Player){
         .o = (struct Object){.posx1 = 0,.posy1 = 0,.posx2 = 0,.posy2 = 0,},
-        .size = 50, .lifes = 0, .speed = 5, .anim = 0
+        .size = 50, .lifes = 0, .speed = SPEED, .anim = 0
       };
       gv.neck = (struct Neck){
         .l1 = (struct Object){.posx1 = 20,.posy1 = 50,.posx2 = 1004,.posy2 = 50},
@@ -749,19 +752,19 @@ void set_Game_Vars(){
   if (!gv.state){
     gv.p1 = (struct Player){
       .o = (struct Object){.posx1 = -100,.posy1 = -100,.posx2 = 0,.posy2 = 0,},
-      .size = 0, .lifes = 0, .speed = 5
+      .size = 0, .lifes = 0, .speed = SPEED
     };
     gv.p2 = (struct Player){
       .o = (struct Object){.posx1 = -100,.posy1 = -100,.posx2 = 0,.posy2 = 0,},
-      .size = 0, .lifes = 0, .speed = 5
+      .size = 0, .lifes = 0, .speed = SPEED
     };
     gv.p3 = (struct Player){
       .o = (struct Object){.posx1 = -100,.posy1 = -100,.posx2 = 0,.posy2 = 0,},
-      .size = 0, .lifes = 0, .speed = 5
+      .size = 0, .lifes = 0, .speed = SPEED
     };
     gv.p4 = (struct Player){
       .o = (struct Object){.posx1 = -100,.posy1 = -100,.posx2 = 0,.posy2 = 0,},
-      .size = 0, .lifes = 0, .speed = 5
+      .size = 0, .lifes = 0, .speed = SPEED
     };
   }else{
     despawn_Perc(&gv.e1);
@@ -790,12 +793,14 @@ void init_Game(){
       SDL_WINDOW_SHOWN);
     if (gv.window) {  
       SDL_SetWindowIcon(gv.window, IMG_Load("../assets/pong.png"));
+	    BGsurface = IMG_Load("../assets/background.jpg");
       gv.renderer = SDL_CreateRenderer(gv.window, -1,
         SDL_RENDERER_ACCELERATED);
       if (gv.renderer) {
         draw_Game();
         return;
       }
+	    SDL_FreeSurface(BGsurface);
       SDL_DestroyWindow(gv.window);
     }
     endAudio();
